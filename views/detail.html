@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{NAME}} — Smash Fighter Guide</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <main class="container detail-page">
+      <a href="/" class="back-link">← Back to all fighters</a>
+
+      <article class="fighter-detail">
+        <img src="{{IMAGE}}" alt="{{NAME}}" class="detail-image" />
+
+        <h1>{{NAME}}</h1>
+
+        <!-- All database fields displayed on the detail page -->
+        <dl class="fighter-attributes">
+          <dt>Franchise</dt>
+          <dd>{{FRANCHISE}}</dd>
+
+          <dt>Debut Smash Game</dt>
+          <dd>{{DEBUT_SMASH}}</dd>
+
+          <dt>Brief</dt>
+          <dd>{{BRIEF}}</dd>
+        </dl>
+      </article>
+    </main>
+  </body>
+</html>

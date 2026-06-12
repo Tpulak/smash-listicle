@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{TITLE}}</title>
+
+    <!-- Pico CSS — required styling framework for this assignment -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+
+    <!-- Your custom styles (frontend) -->
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="page-header">
+        <h1>{{TITLE}}</h1>
+        <p>Browse {{FIGHTER_COUNT}} iconic fighters from the Super Smash Bros. series.</p>
+      </header>
+
+      <!-- FIGHTERS_LIST is built in server.js from data/fighters.js -->
+      <section class="fighter-grid">
+        {{FIGHTERS_LIST}}
+      </section>
+    </main>
+  </body>
+</html>
