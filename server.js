@@ -2,18 +2,16 @@
  * BACKEND — Express server
  *
  * This file handles all routes (URLs) and sends HTML pages to the browser.
- * Fighter data lives in data/fighters.js — edit that file to add characters.
+ * Fighter data is loaded from the PostgreSQL database (see db.js).
  */
 
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
-
-// Import fighter data from data/fighters.js
-const fighters = require("./data/fighters");
+const { getAllFighters, getFighterBySlug } = require("./db");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Serve static frontend files (CSS, local images) from the public/ folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -37,11 +35,13 @@ function renderTemplate(filename, variables) {
  * ROUTE: Home page — lists all fighters
  * URL: http://localhost:3000/
  */
-app.get("/", (req, res) => {
-  // Build HTML for each fighter card on the home page
-  const fightersListHtml = fighters
-    .map(
-      (fighter) => `
+app.get("/", async (req, res) => {
+  try {
+    const fighters = await getAllFighters();
+
+    const fightersListHtml = fighters
+      .map(
+        (fighter) => `
       <article class="fighter-card">
         <img src="${fighter.image}" alt="${fighter.name}" class="fighter-image" />
         <h3><a href="/fighters/${fighter.slug}">${fighter.name}</a></h3>
@@ -51,45 +51,51 @@ app.get("/", (req, res) => {
         <a href="/fighters/${fighter.slug}" role="button" class="secondary">View details</a>
       </article>
     `
-    )
-    .join("");
+      )
+      .join("");
 
-  const html = renderTemplate("index.html", {
-    TITLE: "Super Smash Bros. Fighter Guide",
-    FIGHTER_COUNT: fighters.length,
-    FIGHTERS_LIST: fightersListHtml,
-  });
+    const html = renderTemplate("index.html", {
+      TITLE: "Super Smash Bros. Fighter Guide",
+      FIGHTER_COUNT: fighters.length,
+      FIGHTERS_LIST: fightersListHtml,
+    });
 
-  res.send(html);
+    res.send(html);
+  } catch (err) {
+    console.error("Failed to load fighters:", err.message);
+    res.status(500).send("Could not load fighters from the database.");
+  }
 });
 
 /**
  * ROUTE: Fighter detail page — shows all fields for one character
- * URL: http://localhost:3000/fighters/mario  (slug comes from data/fighters.js)
+ * URL: http://localhost:3000/fighters/mario
  */
-app.get("/fighters/:slug", (req, res) => {
-  const slug = req.params.slug;
+app.get("/fighters/:slug", async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const fighter = await getFighterBySlug(slug);
 
-  // Find the fighter whose slug matches the URL
-  const fighter = fighters.find((f) => f.slug === slug);
+    if (!fighter) {
+      const html = renderTemplate("404.html", {
+        MESSAGE: `No fighter found for "${slug}".`,
+      });
+      return res.status(404).send(html);
+    }
 
-  // If no match, show the 404 page
-  if (!fighter) {
-    const html = renderTemplate("404.html", {
-      MESSAGE: `No fighter found for "${slug}".`,
+    const html = renderTemplate("detail.html", {
+      NAME: fighter.name,
+      FRANCHISE: fighter.franchise,
+      DEBUT_SMASH: fighter.debutSmash,
+      BRIEF: fighter.brief,
+      IMAGE: fighter.image,
     });
-    return res.status(404).send(html);
+
+    res.send(html);
+  } catch (err) {
+    console.error("Failed to load fighter:", err.message);
+    res.status(500).send("Could not load fighter from the database.");
   }
-
-  const html = renderTemplate("detail.html", {
-    NAME: fighter.name,
-    FRANCHISE: fighter.franchise,
-    DEBUT_SMASH: fighter.debutSmash,
-    BRIEF: fighter.brief,
-    IMAGE: fighter.image,
-  });
-
-  res.send(html);
 });
 
 /**
@@ -111,7 +117,7 @@ app.listen(PORT, () => {
     console.error(`\nPort ${PORT} is already in use. Another server is still running.`);
     console.error("Fix: press Ctrl+C in the other terminal, OR run this in PowerShell:\n");
     console.error(
-      "  Get-NetTCPConnection -LocalPort 3000 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\n"
+      `  Get-NetTCPConnection -LocalPort ${PORT} | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\n`
     );
   } else {
     console.error(err);
